@@ -1,51 +1,40 @@
 import tkinter as tk
 import requests
-def get_weather():
-    city = entry_city.get()
-    api_key = "82c30028723289e2e81bbfe6aa041e3"
-    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={api_key}"
-
+def convert():
     try:
-        api_result = requests.get(url)
-        api_result.raise_for_status()
-        data = api_result.json()
+        amount = float(entry_amount.get())
+        from_currency = entry_from.get().upper()
+        to_currency = entry_to.get().upper()
+        
+        url = f"https://api.frankfurter.app/latest?amount={amount}&from={from_currency}&to={to_currency}"
+        response = requests.get(url)
+        data = response.json()
 
-        city_name = data['name']
-        country = data['sys']['country']
-        temp = data['main']['temp']
-        weather = data['weather'][0]['main']
-        humidity = data['main']['humidity']
-        wind = data['wind']['speed']
-
-        result = f"City: {city_name}, {country}\n"
-        result += f"Temperature: {temp} °C\n"
-        result += f"Weather: {weather}\n"
-        result += f"Humidity: {humidity}%\n"
-        result += f"Wind Speed: {wind} m/s"
-
-        label_result.config(text=result)
-
-    except requests.exceptions.HTTPError:
-        label_result.config(text="City not found. Please try again.")
+        if "rates" in data and to_currency in data["rates"]:
+            result = data["rates"][to_currency]
+            label_result.config(text=f"{from_currency} {amount} = {result} {to_currency}")
+        else:
+            label_result.config(text="Invalid currency code.")
     except Exception as e:
-        label_result.config(text=f"Error: {str(e)}")
+        label_result.config(text=f"Error: {e}")
 
 root = tk.Tk()
-root.title("WEATHER APP")
-root.geometry("1000x1000")
-root.configure(bg="orange")
+root.title("CURRENCY CONVERTER")
 
-label_title = tk.Label(root, text="Enter City Name:", font=("Comic Sans MS", 16), bg="white")
-label_title.pack(pady=10)
+tk.Label(root, text="Amount", font=("Comic Sans MS", 14)).pack(pady=5)
+entry_amount = tk.Entry(root)
+entry_amount.pack()
 
-entry_city = tk.Entry(root, font=("Comic Sans MS", 14))
-entry_city.pack(pady=10)
+tk.Label(root, text="From (e.g. USD, EUR)", font=("Comic Sans MS", 13)).pack(pady=5)
+entry_from = tk.Entry(root)
+entry_from.pack()
 
-btn_result = tk.Button(root, text="Get Weather", font=("Comic Sans MS", 12),
-                       bg="white", fg="black", command=get_weather)
-btn_result.pack(pady=18)
+tk.Label(root, text="To (e.g. INR)", font=("Comic Sans MS", 13)).pack(pady=5)
+entry_to = tk.Entry(root)
+entry_to.pack()
 
-label_result = tk.Label(root, text="", font=("Comic Sans MS", 16),
-                        bg="white", justify="center")
-label_result.pack(pady=10)
+tk.Button(root, text="Convert", command=convert).pack(pady=10)
+label_result = tk.Label(root, text="", font=("Comic Sans MS", 12))
+label_result.pack()
+
 root.mainloop()
